@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMM AFG - Admin Panel</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --primary: #0088cc;
+            --primary-dark: #006699;
+            --secondary: #34b7f1;
+            --light: #f5f5f5;
+            --dark: #333;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --gray: #6c757d;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+            padding: 15px 0;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--white);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            list-style: none;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .nav-tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .section {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--dark);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: var(--dark);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.9rem;
+        }
+
+        /* Tables */
+        .table-container {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background-color: var(--warning);
+            color: var(--dark);
+        }
+
+        .status-processing {
+            background-color: var(--secondary);
+            color: var(--white);
+        }
+
+        .status-completed, .status-approved {
+            background-color: var(--success);
+            color: var(--white);
+        }
+
+        .status-cancelled {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        /* Forms */
+        .form-container {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+
+        .form-group {
+            flex: 1 0 300px;
+            padding: 0 10px;
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+            font-size: 1rem;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Login Page */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .login-box {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            color: var(--white);
+            box-shadow: var(--shadow);
+            z-index: 1100;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            background-color: var(--success);
+        }
+
+        .toast-error {
+            background-color: var(--danger);
+        }
+
+        /* Loader */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--white);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 800px;
+            }
+            
+            .form-group {
+                flex: 1 0 100%;
+            }
+            
+            .section-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="login-container" id="loginPage">
+        <div class="login-box">
+            <h2 class="login-title">SMM AFG Admin Login</h2>
+            <div class="form-group">
+                <label class="form-label" for="adminToken">Admin Token</label>
+                <input type="password" class="form-control" id="adminToken" placeholder="Enter admin token">
+            </div>
+            <button class="btn btn-primary btn-block" id="loginBtn">Login</button>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" style="display: none;">
+        <!-- Header -->
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <h1>SMM AFG - Admin Panel</h1>
+                    </div>
+                    <div class="admin-info">
+                        <span>Welcome, Admin</span>
+                        <button class="logout-btn" id="logoutBtn">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav>
+            <div class="container">
+                <ul class="nav-tabs">
+                    <li class="nav-tab active" data-tab="dashboard">Dashboard</li>
+                    <li class="nav-tab" data-tab="services">Services</li>
+                    <li class="nav-tab" data-tab="orders">Orders</li>
+                    <li class="nav-tab" data-tab="deposits">Deposits</li>
+                    <li class="nav-tab" data-tab="users">Users</li>
+                    <li class="nav-tab" data-tab="addresses">Deposit Addresses</li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container">
+            <!-- Dashboard Section -->
+            <section class="section active" id="dashboard">
+                <h2 class="section-title">Dashboard</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value" id="totalUsers">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Orders</div>
+                        <div class="stat-value" id="totalOrders">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pending Orders</div>
+                        <div class="stat-value" id="pendingOrders">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pending Deposits</div>
+                        <div class="stat-value" id="pendingDeposits">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Revenue</div>
+                        <div class="stat-value" id="totalRevenue">$0</div>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <h3 style="padding: 15px 20px; border-bottom: 1px solid #eee;">Recent Orders</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Service</th>
+                                <th>Target</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentOrdersTable">
+                            <!-- Recent orders will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-container">
+                    <h3 style="padding: 15px 20px; border-bottom: 1px solid #eee;">Recent Deposits</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Method</th>
+                                <th>Amount</th>
+                                <th>TxId</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentDepositsTable">
+                            <!-- Recent deposits will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Services Section -->
+            <section class="section" id="services">
+                <h2 class="section-title">
+                    Services Management
+                    <button class="btn btn-primary" id="addServiceBtn">Add New Service</button>
+                </h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Price</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicesTable">
+                            <!-- Services will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Orders Section -->
+            <section class="section" id="orders">
+                <h2 class="section-title">Orders Management</h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Service</th>
+                                <th>Target</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTable">
+                            <!-- Orders will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Deposits Section -->
+            <section class="section" id="deposits">
+                <h2 class="section-title">Deposits Management</h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Method</th>
+                                <th>Amount</th>
+                                <th>TxId</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="depositsTable">
+                            <!-- Deposits will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section class="section" id="users">
+                <h2 class="section-title">Users Management</h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Balance</th>
+                                <th>Orders</th>
+                                <th>Total Spent</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Deposit Addresses Section -->
+            <section class="section" id="addresses">
+                <h2 class="section-title">
+                    Deposit Addresses
+                    <button class="btn btn-primary" id="addAddressBtn">Add New Address</button>
+                </h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Currency</th>
+                                <th>Network</th>
+                                <th>Address</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="addressesTable">
+                            <!-- Addresses will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Service Modal -->
+    <div class="modal" id="serviceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="serviceModalTitle">Add Service</h3>
+                <button class="close-btn" id="closeServiceModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="serviceForm">
+                    <input type="hidden" id="serviceId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="serviceName">Service Name</label>
+                            <input type="text" class="form-control" id="serviceName" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="servicePrice">Price ($)</label>
+                            <input type="number" step="0.01" class="form-control" id="servicePrice" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="serviceDescription">Description</label>
+                        <textarea class="form-control" id="serviceDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="serviceMin">Minimum Quantity</label>
+                            <input type="number" class="form-control" id="serviceMin" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="serviceMax">Maximum Quantity</label>
+                            <input type="number" class="form-control" id="serviceMax" value="10000" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="serviceActive" checked>
+                            <label class="form-label" for="serviceActive">Active</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="cancelService">Cancel</button>
+                <button class="btn btn-success" id="saveService">Save Service</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Modal -->
+    <div class="modal" id="addressModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="addressModalTitle">Add Deposit Address</h3>
+                <button class="close-btn" id="closeAddressModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addressForm">
+                    <input type="hidden" id="addressId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="addressName">Name</label>
+                            <input type="text" class="form-control" id="addressName" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="addressCurrency">Currency</label>
+                            <select class="form-control" id="addressCurrency" required>
+                                <option value="USDT">USDT</option>
+                                <option value="BTC">BTC</option>
+                                <option value="ETH">ETH</option>
+                                <option value="BNB">BNB</option>
+                                <option value="DOGE">DOGE</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addressNetwork">Network</label>
+                        <input type="text" class="form-control" id="addressNetwork" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addressValue">Address</label>
+                        <textarea class="form-control" id="addressValue" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="cancelAddress">Cancel</button>
+                <button class="btn btn-success" id="saveAddress">Save Address</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal" id="orderDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Order Details</h3>
+                <button class="close-btn" id="closeOrderDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="orderDetailsContent">
+                    <!-- Order details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="closeOrderDetails">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Edit Modal -->
+    <div class="modal" id="userEditModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit User Balance</h3>
+                <button class="close-btn" id="closeUserEditModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userEditForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="form-group">
+                        <label class="form-label" for="editUsername">Username</label>
+                        <input type="text" class="form-control" id="editUsername" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editUserBalance">Balance ($)</label>
+                        <input type="number" step="0.01" class="form-control" id="editUserBalance" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="cancelUserEdit">Cancel</button>
+                <button class="btn btn-success" id="saveUserBalance">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Firebase Configuration -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9YnQelXYjrKnkQmzBYD_31MPj2BGDRQM",
+            authDomain: "dogs-31cfa.firebaseapp.com",
+            databaseURL: "https://dogs-31cfa-default-rtdb.firebaseio.com",
+            projectId: "dogs-31cfa",
+            storageBucket: "dogs-31cfa.firebasestorage.app",
+            messagingSenderId: "33515380237",
+            appId: "1:33515380237:web:dcc4ea9729a8c8ac90ff44",
+            measurementId: "G-0YJ301TDVX"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Global variables
+        let adminToken = null;
+        let services = [];
+        let orders = [];
+        let deposits = [];
+        let users = [];
+        let depositAddresses = [];
+
+        // DOM Elements
+        const loginPage = document.getElementById('loginPage');
+        const adminPanel = document.getElementById('adminPanel');
+        const adminTokenInput = document.getElementById('adminToken');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const navTabs = document.querySelectorAll('.nav-tab');
+        const sections = document.querySelectorAll('.section');
+        
+        // Dashboard elements
+        const totalUsers = document.getElementById('totalUsers');
+        const totalOrders = document.getElementById('totalOrders');
+        const pendingOrders = document.getElementById('pendingOrders');
+        const pendingDeposits = document.getElementById('pendingDeposits');
+        const totalRevenue = document.getElementById('totalRevenue');
+        const recentOrdersTable = document.getElementById('recentOrdersTable');
+        const recentDepositsTable = document.getElementById('recentDepositsTable');
+        
+        // Services elements
+        const addServiceBtn = document.getElementById('addServiceBtn');
+        const servicesTable = document.getElementById('servicesTable');
+        const serviceModal = document.getElementById('serviceModal');
+        const serviceModalTitle = document.getElementById('serviceModalTitle');
+        const closeServiceModal = document.getElementById('closeServiceModal');
+        const serviceForm = document.getElementById('serviceForm');
+        const serviceId = document.getElementById('serviceId');
+        const serviceName = document.getElementById('serviceName');
+        const servicePrice = document.getElementById('servicePrice');
+        const serviceDescription = document.getElementById('serviceDescription');
+        const serviceMin = document.getElementById('serviceMin');
+        const serviceMax = document.getElementById('serviceMax');
+        const serviceActive = document.getElementById('serviceActive');
+        const cancelService = document.getElementById('cancelService');
+        const saveService = document.getElementById('saveService');
+        
+        // Orders elements
+        const ordersTable = document.getElementById('ordersTable');
+        const orderDetailsModal = document.getElementById('orderDetailsModal');
+        const orderDetailsContent = document.getElementById('orderDetailsContent');
+        const closeOrderDetailsModal = document.getElementById('closeOrderDetailsModal');
+        const closeOrderDetails = document.getElementById('closeOrderDetails');
+        
+        // Deposits elements
+        const depositsTable = document.getElementById('depositsTable');
+        
+        // Users elements
+        const usersTable = document.getElementById('usersTable');
+        const userEditModal = document.getElementById('userEditModal');
+        const closeUserEditModal = document.getElementById('closeUserEditModal');
+        const userEditForm = document.getElementById('userEditForm');
+        const editUserId = document.getElementById('editUserId');
+        const editUsername = document.getElementById('editUsername');
+        const editUserBalance = document.getElementById('editUserBalance');
+        const cancelUserEdit = document.getElementById('cancelUserEdit');
+        const saveUserBalance = document.getElementById('saveUserBalance');
+        
+        // Addresses elements
+        const addAddressBtn = document.getElementById('addAddressBtn');
+        const addressesTable = document.getElementById('addressesTable');
+        const addressModal = document.getElementById('addressModal');
+        const addressModalTitle = document.getElementById('addressModalTitle');
+        const closeAddressModal = document.getElementById('closeAddressModal');
+        const addressForm = document.getElementById('addressForm');
+        const addressId = document.getElementById('addressId');
+        const addressName = document.getElementById('addressName');
+        const addressCurrency = document.getElementById('addressCurrency');
+        const addressNetwork = document.getElementById('addressNetwork');
+        const addressValue = document.getElementById('addressValue');
+        const cancelAddress = document.getElementById('cancelAddress');
+        const saveAddress = document.getElementById('saveAddress');
+        
+        // Toast
+        const toast = document.getElementById('toast');
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            checkAdminLogin();
+        });
+
+        // Check if admin is already logged in
+        function checkAdminLogin() {
+            const savedToken = localStorage.getItem('smmAfgAdminToken');
+            if (savedToken) {
+                verifyAdminToken(savedToken);
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Login
+            loginBtn.addEventListener('click', login);
+            adminTokenInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+
+            // Logout
+            logoutBtn.addEventListener('click', logout);
+
+            // Navigation tabs
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    navTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show corresponding section
+                    sections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === tabId) {
+                            section.classList.add('active');
+                        }
+                    });
+                });
+            });
+
+            // Service modal
+            addServiceBtn.addEventListener('click', () => openServiceModal());
+            closeServiceModal.addEventListener('click', () => serviceModal.classList.remove('active'));
+            cancelService.addEventListener('click', () => serviceModal.classList.remove('active'));
+            saveService.addEventListener('click', saveServiceData);
+
+            // Address modal
+            addAddressBtn.addEventListener('click', () => openAddressModal());
+            closeAddressModal.addEventListener('click', () => addressModal.classList.remove('active'));
+            cancelAddress.addEventListener('click', () => addressModal.classList.remove('active'));
+            saveAddress.addEventListener('click', saveAddressData);
+
+            // Order details modal
+            closeOrderDetailsModal.addEventListener('click', () => orderDetailsModal.classList.remove('active'));
+            closeOrderDetails.addEventListener('click', () => orderDetailsModal.classList.remove('active'));
+
+            // User edit modal
+            closeUserEditModal.addEventListener('click', () => userEditModal.classList.remove('active'));
+            cancelUserEdit.addEventListener('click', () => userEditModal.classList.remove('active'));
+            saveUserBalance.addEventListener('click', saveUserBalanceData);
+        }
+
+        // Login function
+        function login() {
+            const token = adminTokenInput.value.trim();
+            if (!token) {
+                showToast('Please enter admin token', 'error');
+                return;
+            }
+
+            verifyAdminToken(token);
+        }
+
+        // Verify admin token
+        function verifyAdminToken(token) {
+            database.ref('admin/secret').once('value')
+                .then(snapshot => {
+                    const storedToken = snapshot.val();
+                    if (storedToken === token) {
+                        adminToken = token;
+                        localStorage.setItem('smmAfgAdminToken', token);
+                        showAdminPanel();
+                        loadData();
+                    } else {
+                        showToast('Invalid admin token', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying admin token:', error);
+                    showToast('Error verifying admin token', 'error');
+                });
+        }
+
+        // Show admin panel
+        function showAdminPanel() {
+            loginPage.style.display = 'none';
+            adminPanel.style.display = 'block';
+        }
+
+        // Logout function
+        function logout() {
+            adminToken = null;
+            localStorage.removeItem('smmAfgAdminToken');
+            adminPanel.style.display = 'none';
+            loginPage.style.display = 'flex';
+            adminTokenInput.value = '';
+        }
+
+        // Load data from Firebase
+        function loadData() {
+            loadServices();
+            loadOrders();
+            loadDeposits();
+            loadUsers();
+            loadDepositAddresses();
+        }
+
+        // Load services
+        function loadServices() {
+            database.ref('services').on('value', (snapshot) => {
+                services = [];
+                snapshot.forEach(childSnapshot => {
+                    const service = childSnapshot.val();
+                    service.id = childSnapshot.key;
+                    services.push(service);
+                });
+                
+                displayServices();
+                updateDashboard();
+            });
+        }
+
+        // Load orders
+        function loadOrders() {
+            database.ref('orders').on('value', (snapshot) => {
+                orders = [];
+                snapshot.forEach(childSnapshot => {
+                    const order = childSnapshot.val();
+                    order.id = childSnapshot.key;
+                    orders.push(order);
+                });
+                
+                // Sort by creation date (newest first)
+                orders.sort((a, b) => b.createdAt - a.createdAt);
+                
+                displayOrders();
+                updateDashboard();
+            });
+        }
+
+        // Load deposits
+        function loadDeposits() {
+            database.ref('deposits').on('value', (snapshot) => {
+                deposits = [];
+                snapshot.forEach(childSnapshot => {
+                    const deposit = childSnapshot.val();
+                    deposit.id = childSnapshot.key;
+                    deposits.push(deposit);
+                });
+                
+                // Sort by creation date (newest first)
+                deposits.sort((a, b) => b.createdAt - a.createdAt);
+                
+                displayDeposits();
+                updateDashboard();
+            });
+        }
+
+        // Load users
+        function loadUsers() {
+            database.ref('users').on('value', (snapshot) => {
+                users = [];
+                snapshot.forEach(childSnapshot => {
+                    const user = childSnapshot.val();
+                    user.id = childSnapshot.key;
+                    users.push(user);
+                });
+                
+                displayUsers();
+                updateDashboard();
+            });
+        }
+
+        // Load deposit addresses
+        function loadDepositAddresses() {
+            database.ref('depositAddresses').on('value', (snapshot) => {
+                depositAddresses = [];
+                snapshot.forEach(childSnapshot => {
+                    const address = childSnapshot.val();
+                    address.id = childSnapshot.key;
+                    depositAddresses.push(address);
+                });
+                
+                displayAddresses();
+            });
+        }
+
+        // Update dashboard statistics
+        function updateDashboard() {
+            // Total users
+            totalUsers.textContent = users.length;
+            
+            // Total orders
+            totalOrders.textContent = orders.length;
+            
+            // Pending orders
+            const pendingOrdersCount = orders.filter(order => order.status === 'pending').length;
+            pendingOrders.textContent = pendingOrdersCount;
+            
+            // Pending deposits
+            const pendingDepositsCount = deposits.filter(deposit => deposit.status === 'pending').length;
+            pendingDeposits.textContent = pendingDepositsCount;
+            
+            // Total revenue
+            const completedOrders = orders.filter(order => order.status === 'completed');
+            const revenue = completedOrders.reduce((sum, order) => sum + order.total, 0);
+            totalRevenue.textContent = `$${revenue.toFixed(2)}`;
+            
+            // Recent orders (last 10)
+            displayRecentOrders(orders.slice(0, 10));
+            
+            // Recent deposits (last 10)
+            displayRecentDeposits(deposits.slice(0, 10));
+        }
+
+        // Display services in the table
+        function displayServices() {
+            servicesTable.innerHTML = '';
+            
+            if (services.length === 0) {
+                servicesTable.innerHTML = '<tr><td colspan="7" style="text-align: center;">No services found</td></tr>';
+                return;
+            }
+            
+            services.forEach(service => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${service.name}</td>
+                    <td>${service.description}</td>
+                    <td>$${service.price}</td>
+                    <td>${service.min || 1}</td>
+                    <td>${service.max || 10000}</td>
+                    <td>
+                        <span class="status-badge ${service.active !== false ? 'status-completed' : 'status-cancelled'}">
+                            ${service.active !== false ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm edit-service" data-service-id="${service.id}">Edit</button>
+                        <button class="btn btn-danger btn-sm delete-service" data-service-id="${service.id}">Delete</button>
+                    </td>
+                `;
+                
+                servicesTable.appendChild(row);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-service').forEach(button => {
+                button.addEventListener('click', function() {
+                    const serviceId = this.getAttribute('data-service-id');
+                    openServiceModal(serviceId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-service').forEach(button => {
+                button.addEventListener('click', function() {
+                    const serviceId = this.getAttribute('data-service-id');
+                    deleteService(serviceId);
+                });
+            });
+        }
+
+        // Display orders in the table
+        function displayOrders() {
+            ordersTable.innerHTML = '';
+            
+            if (orders.length === 0) {
+                ordersTable.innerHTML = '<tr><td colspan="9" style="text-align: center;">No orders found</td></tr>';
+                return;
+            }
+            
+            orders.forEach(order => {
+                // Find service name
+                const service = services.find(s => s.id === order.serviceId) || { name: 'Unknown Service' };
+                
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${order.id.substring(0, 8)}...</td>
+                    <td>${order.username} (${order.userTelegramId})</td>
+                    <td>${service.name}</td>
+                    <td>${order.target}</td>
+                    <td>${order.quantity}</td>
+                    <td>$${order.total}</td>
+                    <td>
+                        <span class="status-badge status-${order.status}">${order.status}</span>
+                    </td>
+                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm view-order" data-order-id="${order.id}">View</button>
+                        <select class="status-select" data-order-id="${order.id}">
+                            <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                            <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
+                            <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                        </select>
+                    </td>
+                `;
+                
+                ordersTable.appendChild(row);
+            });
+            
+            // Add event listeners to view buttons and status selects
+            document.querySelectorAll('.view-order').forEach(button => {
+                button.addEventListener('click', function() {
+                    const orderId = this.getAttribute('data-order-id');
+                    viewOrderDetails(orderId);
+                });
+            });
+            
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const orderId = this.getAttribute('data-order-id');
+                    const newStatus = this.value;
+                    updateOrderStatus(orderId, newStatus);
+                });
+            });
+        }
+
+        // Display deposits in the table
+        function displayDeposits() {
+            depositsTable.innerHTML = '';
+            
+            if (deposits.length === 0) {
+                depositsTable.innerHTML = '<tr><td colspan="8" style="text-align: center;">No deposits found</td></tr>';
+                return;
+            }
+            
+            deposits.forEach(deposit => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${deposit.id.substring(0, 8)}...</td>
+                    <td>${deposit.username} (${deposit.userTelegramId})</td>
+                    <td>${deposit.method} (${deposit.currency})</td>
+                    <td>$${deposit.amount}</td>
+                    <td>${deposit.txId}</td>
+                    <td>
+                        <span class="status-badge status-${deposit.status}">${deposit.status}</span>
+                    </td>
+                    <td>${new Date(deposit.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        ${deposit.status === 'pending' ? 
+                            `<button class="btn btn-success btn-sm approve-deposit" data-deposit-id="${deposit.id}">Approve</button>
+                             <button class="btn btn-danger btn-sm reject-deposit" data-deposit-id="${deposit.id}">Reject</button>` : 
+                            ''
+                        }
+                    </td>
+                `;
+                
+                depositsTable.appendChild(row);
+            });
+            
+            // Add event listeners to approve and reject buttons
+            document.querySelectorAll('.approve-deposit').forEach(button => {
+                button.addEventListener('click', function() {
+                    const depositId = this.getAttribute('data-deposit-id');
+                    approveDeposit(depositId);
+                });
+            });
+            
+            document.querySelectorAll('.reject-deposit').forEach(button => {
+                button.addEventListener('click', function() {
+                    const depositId = this.getAttribute('data-deposit-id');
+                    rejectDeposit(depositId);
+                });
+            });
+        }
+
+        // Display users in the table
+        function displayUsers() {
+            usersTable.innerHTML = '';
+            
+            if (users.length === 0) {
+                usersTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">No users found</td></tr>';
+                return;
+            }
+            
+            users.forEach(user => {
+                // Count user orders
+                const userOrders = orders.filter(order => order.userTelegramId === user.id);
+                const completedOrders = userOrders.filter(order => order.status === 'completed');
+                const totalSpent = completedOrders.reduce((sum, order) => sum + order.total, 0);
+                
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.username || 'N/A'}</td>
+                    <td>$${user.balance || 0}</td>
+                    <td>${userOrders.length} (${completedOrders.length} completed)</td>
+                    <td>$${totalSpent.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm edit-user" data-user-id="${user.id}">Edit Balance</button>
+                    </td>
+                `;
+                
+                usersTable.appendChild(row);
+            });
+            
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-user').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    openUserEditModal(userId);
+                });
+            });
+        }
+
+        // Display deposit addresses in the table
+        function displayAddresses() {
+            addressesTable.innerHTML = '';
+            
+            if (depositAddresses.length === 0) {
+                addressesTable.innerHTML = '<tr><td colspan="5" style="text-align: center;">No deposit addresses found</td></tr>';
+                return;
+            }
+            
+            depositAddresses.forEach(address => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${address.name}</td>
+                    <td>${address.currency}</td>
+                    <td>${address.network}</td>
+                    <td>${address.address.substring(0, 20)}...</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm edit-address" data-address-id="${address.id}">Edit</button>
+                        <button class="btn btn-danger btn-sm delete-address" data-address-id="${address.id}">Delete</button>
+                    </td>
+                `;
+                
+                addressesTable.appendChild(row);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-address').forEach(button => {
+                button.addEventListener('click', function() {
+                    const addressId = this.getAttribute('data-address-id');
+                    openAddressModal(addressId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-address').forEach(button => {
+                button.addEventListener('click', function() {
+                    const addressId = this.getAttribute('data-address-id');
+                    deleteAddress(addressId);
+                });
+            });
+        }
+
+        // Display recent orders in dashboard
+        function displayRecentOrders(recentOrders) {
+            recentOrdersTable.innerHTML = '';
+            
+            if (recentOrders.length === 0) {
+                recentOrdersTable.innerHTML = '<tr><td colspan="8" style="text-align: center;">No recent orders</td></tr>';
+                return;
+            }
+            
+            recentOrders.forEach(order => {
+                // Find service name
+                const service = services.find(s => s.id === order.serviceId) || { name: 'Unknown Service' };
+                
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${order.id.substring(0, 8)}...</td>
+                    <td>${order.username}</td>
+                    <td>${service.name}</td>
+                    <td>${order.target.substring(0, 20)}...</td>
+                    <td>${order.quantity}</td>
+                    <td>$${order.total}</td>
+                    <td>
+                        <span class="status-badge status-${order.status}">${order.status}</span>
+                    </td>
+                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                `;
+                
+                recentOrdersTable.appendChild(row);
+            });
+        }
+
+        // Display recent deposits in dashboard
+        function displayRecentDeposits(recentDeposits) {
+            recentDepositsTable.innerHTML = '';
+            
+            if (recentDeposits.length === 0) {
+                recentDepositsTable.innerHTML = '<tr><td colspan="8" style="text-align: center;">No recent deposits</td></tr>';
+                return;
+            }
+            
+            recentDeposits.forEach(deposit => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${deposit.id.substring(0, 8)}...</td>
+                    <td>${deposit.username}</td>
+                    <td>${deposit.method}</td>
+                    <td>$${deposit.amount}</td>
+                    <td>${deposit.txId.substring(0, 20)}...</td>
+                    <td>
+                        <span class="status-badge status-${deposit.status}">${deposit.status}</span>
+                    </td>
+                    <td>${new Date(deposit.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        ${deposit.status === 'pending' ? 
+                            `<button class="btn btn-success btn-sm approve-deposit-dash" data-deposit-id="${deposit.id}">Approve</button>` : 
+                            ''
+                        }
+                    </td>
+                `;
+                
+                recentDepositsTable.appendChild(row);
+            });
+            
+            // Add event listeners to approve buttons
+            document.querySelectorAll('.approve-deposit-dash').forEach(button => {
+                button.addEventListener('click', function() {
+                    const depositId = this.getAttribute('data-deposit-id');
+                    approveDeposit(depositId);
+                });
+            });
+        }
+
+        // Open service modal for adding or editing
+        function openServiceModal(serviceId = null) {
+            if (serviceId) {
+                // Edit mode
+                const service = services.find(s => s.id === serviceId);
+                if (!service) return;
+                
+                serviceModalTitle.textContent = 'Edit Service';
+                serviceId.value = serviceId;
+                serviceName.value = service.name;
+                servicePrice.value = service.price;
+                serviceDescription.value = service.description;
+                serviceMin.value = service.min || 1;
+                serviceMax.value = service.max || 10000;
+                serviceActive.checked = service.active !== false;
+            } else {
+                // Add mode
+                serviceModalTitle.textContent = 'Add Service';
+                serviceForm.reset();
+                serviceId.value = '';
+                serviceActive.checked = true;
+            }
+            
+            serviceModal.classList.add('active');
+        }
+
+        // Save service data
+        function saveServiceData() {
+            const id = serviceId.value;
+            const name = serviceName.value.trim();
+            const price = parseFloat(servicePrice.value);
+            const description = serviceDescription.value.trim();
+            const min = parseInt(serviceMin.value) || 1;
+            const max = parseInt(serviceMax.value) || 10000;
+            const active = serviceActive.checked;
+            
+            if (!name || !price || !description) {
+                showToast('Please fill all required fields', 'error');
+                return;
+            }
+            
+            if (min >= max) {
+                showToast('Minimum quantity must be less than maximum', 'error');
+                return;
+            }
+            
+            const serviceData = {
+                name,
+                price,
+                description,
+                min,
+                max,
+                active
+            };
+            
+            if (id) {
+                // Update existing service
+                database.ref(`services/${id}`).update(serviceData)
+                    .then(() => {
+                        showToast('Service updated successfully', 'success');
+                        serviceModal.classList.remove('active');
+                    })
+                    .catch(error => {
+                        console.error('Error updating service:', error);
+                        showToast('Failed to update service', 'error');
+                    });
+            } else {
+                // Add new service
+                database.ref('services').push(serviceData)
+                    .then(() => {
+                        showToast('Service added successfully', 'success');
+                        serviceModal.classList.remove('active');
+                    })
+                    .catch(error => {
+                        console.error('Error adding service:', error);
+                        showToast('Failed to add service', 'error');
+                    });
+            }
+        }
+
+        // Delete service
+        function deleteService(serviceId) {
+            if (!confirm('Are you sure you want to delete this service?')) {
+                return;
+            }
+            
+            database.ref(`services/${serviceId}`).remove()
+                .then(() => {
+                    showToast('Service deleted successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error deleting service:', error);
+                    showToast('Failed to delete service', 'error');
+                });
+        }
+
+        // Open address modal for adding or editing
+        function openAddressModal(addressId = null) {
+            if (addressId) {
+                // Edit mode
+                const address = depositAddresses.find(a => a.id === addressId);
+                if (!address) return;
+                
+                addressModalTitle.textContent = 'Edit Deposit Address';
+                addressId.value = addressId;
+                addressName.value = address.name;
+                addressCurrency.value = address.currency;
+                addressNetwork.value = address.network;
+                addressValue.value = address.address;
+            } else {
+                // Add mode
+                addressModalTitle.textContent = 'Add Deposit Address';
+                addressForm.reset();
+                addressId.value = '';
+            }
+            
+            addressModal.classList.add('active');
+        }
+
+        // Save address data
+        function saveAddressData() {
+            const id = addressId.value;
+            const name = addressName.value.trim();
+            const currency = addressCurrency.value;
+            const network = addressNetwork.value.trim();
+            const address = addressValue.value.trim();
+            
+            if (!name || !currency || !network || !address) {
+                showToast('Please fill all required fields', 'error');
+                return;
+            }
+            
+            const addressData = {
+                name,
+                currency,
+                network,
+                address
+            };
+            
+            if (id) {
+                // Update existing address
+                database.ref(`depositAddresses/${id}`).update(addressData)
+                    .then(() => {
+                        showToast('Address updated successfully', 'success');
+                        addressModal.classList.remove('active');
+                    })
+                    .catch(error => {
+                        console.error('Error updating address:', error);
+                        showToast('Failed to update address', 'error');
+                    });
+            } else {
+                // Add new address
+                database.ref('depositAddresses').push(addressData)
+                    .then(() => {
+                        showToast('Address added successfully', 'success');
+                        addressModal.classList.remove('active');
+                    })
+                    .catch(error => {
+                        console.error('Error adding address:', error);
+                        showToast('Failed to add address', 'error');
+                    });
+            }
+        }
+
+        // Delete address
+        function deleteAddress(addressId) {
+            if (!confirm('Are you sure you want to delete this deposit address?')) {
+                return;
+            }
+            
+            database.ref(`depositAddresses/${addressId}`).remove()
+                .then(() => {
+                    showToast('Address deleted successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error deleting address:', error);
+                    showToast('Failed to delete address', 'error');
+                });
+        }
+
+        // View order details
+        function viewOrderDetails(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            // Find service
+            const service = services.find(s => s.id === order.serviceId) || { name: 'Unknown Service' };
+            
+            orderDetailsContent.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Order ID</label>
+                    <div>${order.id}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">User</label>
+                    <div>${order.username} (${order.userTelegramId})</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Service</label>
+                    <div>${service.name}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Target</label>
+                    <div>${order.target}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantity</label>
+                    <div>${order.quantity}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Total Price</label>
+                    <div>$${order.total}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <div>
+                        <span class="status-badge status-${order.status}">${order.status}</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Order Date</label>
+                    <div>${new Date(order.createdAt).toLocaleString()}</div>
+                </div>
+            `;
+            
+            orderDetailsModal.classList.add('active');
+        }
+
+        // Update order status
+        function updateOrderStatus(orderId, newStatus) {
+            database.ref(`orders/${orderId}/status`).set(newStatus)
+                .then(() => {
+                    showToast('Order status updated successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error updating order status:', error);
+                    showToast('Failed to update order status', 'error');
+                });
+        }
+
+        // Approve deposit
+        function approveDeposit(depositId) {
+            const deposit = deposits.find(d => d.id === depositId);
+            if (!deposit) return;
+            
+            // Update deposit status
+            database.ref(`deposits/${depositId}/status`).set('approved')
+                .then(() => {
+                    // Update user balance
+                    return database.ref(`users/${deposit.userTelegramId}/balance`).transaction(currentBalance => {
+                        return (currentBalance || 0) + deposit.amount;
+                    });
+                })
+                .then(() => {
+                    // Create notification
+                    const notification = {
+                        message: `Your deposit of $${deposit.amount} has been approved`,
+                        type: 'deposit_approved',
+                        createdAt: Date.now(),
+                        read: false
+                    };
+                    
+                    return database.ref(`notifications/${deposit.userTelegramId}`).push(notification);
+                })
+                .then(() => {
+                    showToast('Deposit approved successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error approving deposit:', error);
+                    showToast('Failed to approve deposit', 'error');
+                });
+        }
+
+        // Reject deposit
+        function rejectDeposit(depositId) {
+            if (!confirm('Are you sure you want to reject this deposit?')) {
+                return;
+            }
+            
+            database.ref(`deposits/${depositId}/status`).set('rejected')
+                .then(() => {
+                    showToast('Deposit rejected successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error rejecting deposit:', error);
+                    showToast('Failed to reject deposit', 'error');
+                });
+        }
+
+        // Open user edit modal
+        function openUserEditModal(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            editUserId.value = userId;
+            editUsername.value = user.username || 'N/A';
+            editUserBalance.value = user.balance || 0;
+            
+            userEditModal.classList.add('active');
+        }
+
+        // Save user balance
+        function saveUserBalanceData() {
+            const userId = editUserId.value;
+            const newBalance = parseFloat(editUserBalance.value);
+            
+            if (isNaN(newBalance) || newBalance < 0) {
+                showToast('Please enter a valid balance', 'error');
+                return;
+            }
+            
+            database.ref(`users/${userId}/balance`).set(newBalance)
+                .then(() => {
+                    showToast('User balance updated successfully', 'success');
+                    userEditModal.classList.remove('active');
+                })
+                .catch(error => {
+                    console.error('Error updating user balance:', error);
+                    showToast('Failed to update user balance', 'error');
+                });
+        }
+
+        // Show toast message
+        function showToast(message, type) {
+            toast.textContent = message;
+            toast.className = 'toast';
+            toast.classList.add(`toast-${type}`, 'show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 
